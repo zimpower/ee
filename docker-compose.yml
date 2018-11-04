@@ -1,0 +1,8 @@
+version: '3.3'
+
+services:
+  ee:
+    image: 127.0.0.1:5000/ee
+    build: .
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
