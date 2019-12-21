@@ -19,7 +19,7 @@ import json
 from ee import EE
 
 EXIT = False
-mqtt_id = "ee_status@"  + socket.gethostname()
+mqtt_id = "ee_status@" + socket.gethostname()
 mqtt_topic_pub = "home/broadband/ee"
 mqtt_topic_sub = "instruction/ee"
 URL = "http://add-on.ee.co.uk"

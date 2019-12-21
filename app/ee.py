@@ -61,10 +61,9 @@ class EE:
         logger.debug("    -> result %s", results)
 
         (usage, usage_units), (allowance, allowance_units) = results
-        logger.debug("    -> received usage: %s %s",
-                     usage, usage_units)
-        logger.debug("    -> received allowance: %s %s",
-                     allowance, allowance_units)
+        logger.debug("    -> received usage: %s %s", usage, usage_units)
+        logger.debug("    -> received allowance: %s %s", allowance,
+                     allowance_units)
 
         # usage, allowance = [float(s) for s in re.findall(regex, span)]
         # logger.debug("Successully received usage: %s and allowance: %s",
