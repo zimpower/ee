@@ -1,8 +1,12 @@
-version: '3.3'
+version: "3.3"
 
 services:
   ee:
-    image: 127.0.0.1:5000/ee
     build: .
+    restart: always
+    command: python app.py "192.168.1.2" -U mqtt -p Jum747bo --interface=eno1 --time=15
+    hostname: ee
+    container_name: ee
+    network_mode: host
     volumes:
-      - /etc/localtime:/etc/localtime:ro
+      - ./app:/app

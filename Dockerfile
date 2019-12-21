@@ -1,10 +1,18 @@
 FROM python:alpine
-MAINTAINER Zimpower <simon.hards@gmail.com>
+LABEL maintainer "Zimpower <simon.hards@gmail.com>"
 
-RUN pip install beautifulsoup4
-RUN pip install paho-mqtt
+
 RUN apk add curl
 
-COPY ee.py /ee.py
+# RUN mkdir -p /app  <- not needed
+WORKDIR /app
 
-CMD ["python", "/ee.py"]
+COPY ./app/requirements.txt requirements.txt
+RUN pip3 install -r requirements.txt
+
+COPY app/* ./
+# CMD ["sleep","1000"] 
+
+# CMD ["python", "app.py", "192.168.7.214", "--interface=enp2s0f0", "--time=15"]
+# CMD ["python", "app.py", "192.168.1.109", "--interface=enp2s0f0", "--time=15"]
+# CMD ["python", "app.py", "mediastation.local", "--interface=enp2s0f0", "--time=15"]
