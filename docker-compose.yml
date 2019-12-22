@@ -4,8 +4,8 @@ services:
   ee:
     build: .
     restart: always
-    command: python app.py "192.168.1.2" -U ${MQTT_USERNAME} -p ${MQTT_PASSWORD} --interface=eno1 --time=15
     hostname: ee
+    command: python app.py "${MQTT_BROKER}" -U ${MQTT_USERNAME} -p ${MQTT_PASSWORD} --interface=eno1 --time=15
     container_name: ee
     network_mode: host
     volumes:
