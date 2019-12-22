@@ -10,13 +10,13 @@ Once the python script has successfully scraped the ee status webpage, the 3 dat
 
 ## Usage
 
-```python
+```shell
 $ python app.py <MQTT_BROKER_IP> -U <MQTT_USERNAME> -p <MQTT_PASSWORD> --interface=<INTERFACE> --time=<MINS>
 ```
 
 For example:
 
-```python
+```shell
 $ python app.py "192.168.1.2" -U mqtt -p passwd --interface=eno1 --time=15
 ```
 
