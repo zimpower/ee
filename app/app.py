@@ -65,7 +65,7 @@ def main():
 
     def on_connect(client, userdata, flags, rc):
         try:
-            if not rc:
+            if rc == 0:
                 logger.info(f'MQTT Connected OK with code: {rc}')
                 client.subscribe(mqtt_topic_sub)
         except Exception as e:
