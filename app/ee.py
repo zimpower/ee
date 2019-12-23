@@ -5,7 +5,7 @@ import datetime
 import re
 
 # Setup Logging
-logger = logging.getLogger("ee.py")
+logger = logging.getLogger('ee.py')
 handler = logging.StreamHandler()
 formatter = logging.Formatter(
     '%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
@@ -14,8 +14,8 @@ logger.addHandler(handler)
 logger.setLevel(logging.DEBUG)
 
 
-URL = "http://add-on.ee.co.uk"
-INTERFACE = "enp2s0f0"
+URL = 'http://add-on.ee.co.uk'
+INTERFACE = 'enp2s0f0'
 
 
 class EE:
@@ -24,46 +24,50 @@ class EE:
         self._interface = interface
 
     def download(self):
-        cmd = "curl --silent --interface " + self._interface + " " + self._url
-        logger.debug("Execute CURL using command '%s'", cmd)
+        """ Downloads the EE status page using CURL shell command """
+        cmd = f'curl --silent --interface {self._interface} {self._url}'
+        logger.info('Downloading EE web status Page')
+        logger.debug(f'Execute CURL using command "{cmd}"')
         proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
         (out, err) = proc.communicate()
         if err is None:
             return out
 
-        logger.error("Error using CURL: %s", err)
+        logger.error(f'Error using CURL: {err}')
         return None
 
     def scrape(self):
-        logger.debug("Starting ee usage web scraper...")
+        """ Scrapes an EE status web page returning a dictionary of data """
+
+        logger.info('Starting ee usage web scraper...')
+
         raw_html = self.download()
         # logger.debug(raw_html)
-        logger.debug("Parsing HTML using BeautifulSoup ")
+        logger.debug('Parsing HTML using BeautifulSoup')
 
         parsed_html = BeautifulSoup(raw_html, 'html.parser')
 
         # find span with the class name 'allowance__left'
-        logger.debug("Finding usage info HTML Span")
+        logger.debug('Finding usage info HTML Span')
         spans = parsed_html.find_all(class_='allowance__left')
         if not spans:
-            logger.warn("Error finding class=allowance__left span")
+            logger.warn('Error finding class=allowance__left span')
             return None
 
         span = spans[0].get_text()
-        logger.debug("Found Span %s", span)
+        logger.debug(f'Found Span {span}')
 
         # Extract the usage and allowance
         # regex expression to search for 115.5GB or 200GB
         regex = r'\b(\d+[\.]?[\d+]?)([M|G]B)'
-        logger.debug("Scraping Span leaf text with regex %s", regex)
+        logger.debug(f'Scraping Span leaf text with regex {regex}')
 
         results = [s for s in re.findall(regex, span)]
-        logger.debug("    -> result %s", results)
+        logger.debug(f'    -> result {results}')
 
         (usage, usage_units), (allowance, allowance_units) = results
-        logger.debug("    -> received usage: %s %s", usage, usage_units)
-        logger.debug("    -> received allowance: %s %s", allowance,
-                     allowance_units)
+        logger.debug(f'    -> received usage: {usage} {usage_units}')
+        logger.debug(f'    -> received allowance: {allowance} {allowance_units}')
 
         # usage, allowance = [float(s) for s in re.findall(regex, span)]
         # logger.debug("Successully received usage: %s and allowance: %s",
@@ -86,19 +90,18 @@ class EE:
 
         paras = parsed_html.find_all(class_='allowance__timespan')
         if not paras:
-            logger.warn("  Error finding <p class=allowance__timespan>")
+            logger.warn('Error finding <p class=allowance__timespan>')
             return None
-        logger.debug("  Found p %s", paras)
+        logger.debug(f'  Found p {paras}')
 
         time_remaining = paras[0].span.get_text().strip()
-        logger.debug("    -> time remaining : %s", time_remaining)
+        logger.debug(f'    -> time remaining : {time_remaining}')
 
         #  8 Days  23 Hrs
         regex = r'(\d+)'
-        logger.debug("  Scraping Span leaf text with regex %s", regex)
+        logger.debug('  Scraping Span leaf text with regex {regex}')
         days, hours = [int(s) for s in re.findall(regex, time_remaining)]
-        logger.debug(
-            "  -> extracted time remaining: %s days %s hours", days, hours)
+        logger.debug(f'  -> extracted time remaining: {days} days {hours} hours')
 
         self._days = days
         self._hours = hours
@@ -111,18 +114,21 @@ class EE:
     def usage(self):
         return self._usage
 
-    def to_GB(iself, num, units):
+    def to_GB(self, num, units):
+        """ Converts from KB, MB, GB, TB to GB """
         defs = {'KB': 1024, 'MB': 1024**2, 'GB': 1024**3, 'TB': 1024**4}
         bytes = float(num) * defs[units]
-        return round(bytes/defs["GB"], 3)
+        return round(bytes/defs['GB'], 3)
 
     def json(self):
+        """ Creates a dictionary of the instance variables.
+            Allowance and usage is converted to standard units. """
         return {
             'usage': self.to_GB(self._usage, self._usage_units),
-            "usage_units": "GB",
+            'usage_units': 'GB',
             'allowance': self.to_GB(self._allowance, self._allowance_units),
-            "allowance_units": "GB",
-            "days_remaining": self._days,
-            "hours_remaining": self._hours,
+            'allowance_units': 'GB',
+            'days_remaining': self._days,
+            'hours_remaining': self._hours,
             'timestamp': self._timestamp
         }
