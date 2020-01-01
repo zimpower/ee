@@ -3,6 +3,7 @@ import subprocess
 import logging
 import datetime
 import re
+import curl
 
 # Setup Logging
 logger = logging.getLogger('ee.py')
@@ -25,16 +26,15 @@ class EE:
 
     def download(self):
         """ Downloads the EE status page using CURL shell command """
-        cmd = f'curl --silent --interface {self._interface} {self._url}'
-        logger.info('Downloading EE web status Page')
-        logger.debug(f'Execute CURL using command "{cmd}"')
-        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
-        (out, err) = proc.communicate()
-        if err is None:
-            return out
+        start_time = datetime.datetime.now()
+        resp = curl.curl(url=self._url, iface=self._interface)
+        end_time = datetime.datetime.now()
+        elapsed_time = end_time - start_time
+        self._elapsed_time = round(elapsed_time.seconds * \
+                1000 + elapsed_time.microseconds / 1000, 3)
+        logger.info(f'Download time {self._elapsed_time}')
 
-        logger.error(f'Error using CURL: {err}')
-        return None
+        return resp
 
     def scrape(self):
         """ Scrapes an EE status web page returning a dictionary of data """
@@ -42,6 +42,13 @@ class EE:
         logger.info('Starting ee usage web scraper...')
 
         raw_html = self.download()
+
+        if raw_html is None:
+            self._connected = 'disconnected'
+            return self.json()
+
+        self._connected = 'connected'
+
         # logger.debug(raw_html)
         logger.debug('Parsing HTML using BeautifulSoup')
 
@@ -67,7 +74,8 @@ class EE:
 
         (usage, usage_units), (allowance, allowance_units) = results
         logger.debug(f'    -> received usage: {usage} {usage_units}')
-        logger.debug(f'    -> received allowance: {allowance} {allowance_units}')
+        logger.debug(
+            f'    -> received allowance: {allowance} {allowance_units}')
 
         # usage, allowance = [float(s) for s in re.findall(regex, span)]
         # logger.debug("Successully received usage: %s and allowance: %s",
@@ -101,7 +109,8 @@ class EE:
         regex = r'(\d+)'
         logger.debug('  Scraping Span leaf text with regex {regex}')
         days, hours = [int(s) for s in re.findall(regex, time_remaining)]
-        logger.debug(f'  -> extracted time remaining: {days} days {hours} hours')
+        logger.debug(
+            f'  -> extracted time remaining: {days} days {hours} hours')
 
         self._days = days
         self._hours = hours
@@ -124,11 +133,13 @@ class EE:
         """ Creates a dictionary of the instance variables.
             Allowance and usage is converted to standard units. """
         return {
+            'timestamp': self._timestamp,
             'usage': self.to_GB(self._usage, self._usage_units),
             'usage_units': 'GB',
             'allowance': self.to_GB(self._allowance, self._allowance_units),
             'allowance_units': 'GB',
             'days_remaining': self._days,
             'hours_remaining': self._hours,
-            'timestamp': self._timestamp
+            'download_time_ms': self._elapsed_time,
+            'connection_status': self._connected
         }

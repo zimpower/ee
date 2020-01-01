@@ -1,14 +1,23 @@
 FROM python:alpine
 LABEL maintainer "Zimpower <simon.hards@gmail.com>"
 
+# Install packages 
+RUN apk add --no-cache libcurl
 
-RUN apk add curl
+# PYCURL: Needed for pycurl
+ENV PYCURL_SSL_LIBRARY=openssl
+
+# PYCURL: Install packages only needed for building, install and clean on a single layer
+RUN apk add --no-cache --virtual .build-dependencies build-base curl-dev
 
 # RUN mkdir -p /app  <- not needed
 WORKDIR /app
 
 COPY ./app/requirements.txt requirements.txt
 RUN pip3 install -r requirements.txt
+
+# PYCURL: Cleanup
+RUN apk del .build-dependencies
 
 COPY app/* ./
 # CMD ["sleep","1000"] 
